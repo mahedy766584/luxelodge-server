@@ -26,7 +26,8 @@ async function run() {
     try {
 
         const roomsCollection = client.db("luxeLodge_DB").collection("rooms");
-        const reviewsCollection = client.db("luxeLodge_DB").collection("review");
+        const reviewsCollection = client.db("luxeLodge_DB").collection("reviews");
+        const aboutCollection = client.db("luxeLodge_DB").collection("about");
 
         // rooms api
         app.get('/rooms', async (req, res) =>{
@@ -64,6 +65,12 @@ async function run() {
         // reviews api
         app.get('/reviews', async(req, res) =>{
             const result = await reviewsCollection.find().toArray();
+            res.send(result);
+        })
+
+        // about api
+        app.get('/about', async(req, res) =>{
+            const result = await aboutCollection.find().toArray();
             res.send(result);
         })
 
