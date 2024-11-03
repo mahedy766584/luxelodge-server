@@ -4,6 +4,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const cors = require('cors');
 const colors = require('colors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 app.use(cors());
@@ -28,6 +29,34 @@ async function run() {
         const roomsCollection = client.db("luxeLodge_DB").collection("rooms");
         const reviewsCollection = client.db("luxeLodge_DB").collection("reviews");
         const aboutCollection = client.db("luxeLodge_DB").collection("about");
+
+
+        //jwt related api
+        app.post('/jwt', async(req, res) =>{
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKE_SECRET, {
+                expiresIn: '365d'
+            })
+            res.send({token})
+            console.log('jwt token payci vai --->', token, 'user--->', user);
+        })
+
+        //middleware
+        const verifyToken = async(req, res, next) =>{
+            console.log('inside the verify token headers ---->>', req.headers.authorization);
+            if(!req.headers.authorization){
+                return res.status(401).send({message: 'forbidden access'})
+            };
+            const token = req.headers.authorization.split(' ')[1]
+            jwt.verify(token, process.env.ACCESS_TOKE_SECRET, (err, decoded) =>{
+                if(err){
+                    return res.status(401).send({message: 'forbidden access'})
+                }
+                req.decoded = decoded;
+                next();
+            });
+        };
+
 
         // rooms api
         app.get('/rooms', async (req, res) =>{
