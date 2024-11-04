@@ -29,6 +29,7 @@ async function run() {
         const roomsCollection = client.db("luxeLodge_DB").collection("rooms");
         const reviewsCollection = client.db("luxeLodge_DB").collection("reviews");
         const aboutCollection = client.db("luxeLodge_DB").collection("about");
+        const usersCollection = client.db("luxeLodge_DB").collection("users");
 
 
         //jwt related api
@@ -38,12 +39,12 @@ async function run() {
                 expiresIn: '365d'
             })
             res.send({token})
-            console.log('jwt token payci vai --->', token, 'user--->', user);
+            // console.log('jwt token payci vai --->', token, 'user--->', user);
         })
 
         //middleware
         const verifyToken = async(req, res, next) =>{
-            console.log('inside the verify token headers ---->>', req.headers.authorization);
+            // console.log('inside the verify token headers ---->>', req.headers.authorization);
             if(!req.headers.authorization){
                 return res.status(401).send({message: 'forbidden access'})
             };
@@ -56,6 +57,27 @@ async function run() {
                 next();
             });
         };
+
+        // /use verify admin after verifyToken
+        const verifyAdmin = async (req, res, next) =>{
+            const email = req.decoded.email;
+            console.log(email);
+            next()
+        }
+
+        //user related api
+        app.post('/users',  async(req, res) =>{
+            const users = req.body;
+
+            const query = {email: users?.email};
+            const existingUser = await usersCollection.findOne(query);
+            if(existingUser){
+                return res.send({message: 'user already exist', insertedId: null})
+            }
+
+            const result = await usersCollection.insertOne(users);
+            res.send(result)
+        })
 
 
         // rooms api
