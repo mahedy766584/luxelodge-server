@@ -124,17 +124,23 @@ async function run() {
             res.send(result);
         })
 
-        // rooms api
-        app.post('/rooms', verifyToken, async(req, res) =>{
+        // booking api
+        app.post('/booking', verifyToken, async(req, res) =>{
             const body = req.body;
             const result = await bookingsCollection.insertOne(body);
             res.send(result);
         })
 
+        app.get('/bookings', verifyToken, verifyAdmin, async(req, res) =>{
+            const result = await bookingsCollection.find().toArray();
+            res.send(result);
+        })
+
+        //room api
         app.post('/rooms/addRoom', verifyToken, verifyAdmin, async(req, res) =>{
             const body = req.body;
             const result = await roomsCollection.insertOne(body);
-            res.send('room add with successful from admin');
+            res.send(result);
         })
         
         app.get('/rooms', async (req, res) =>{
