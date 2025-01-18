@@ -1,14 +1,17 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 const cors = require('cors');
 const colors = require('colors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const translate = require("google-translate-api-x");
 
 app.use(cors());
 app.use(express.json());
+
+const TRANSLATION_API_URL = "https://script.google.com/macros/s/AKfycbwzzJJ6Y1S7SZEKWTlT9bjAEXjZeUjK2jqq7nRZZ1an1K09e7WxS-fVM61Ab6ghRS8sRw/exec";
 
 
 const uri =  `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@ac-dczafpo-shard-00-00.ylujpzf.mongodb.net:27017,ac-dczafpo-shard-00-01.ylujpzf.mongodb.net:27017,ac-dczafpo-shard-00-02.ylujpzf.mongodb.net:27017/?ssl=true&replicaSet=atlas-ul1323-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster0`
@@ -187,7 +190,56 @@ async function run() {
             res.send(result);
         })
 
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        //like api
+        app.post('/room/like', async(req, res) =>{
+            try{
+                const {userEmail, roomId} = req.body;
+                const room = await roomsCollection.findOne({_id: new ObjectId(roomId)});
+                if(!room){
+                    return res.status(404).json({message: 'Room not found'});
+                };
+
+                //checking user like
+                if(room.likedBy && room.likedBy.includes(userEmail)){
+                    return res.status(400).json({message: 'User already liked this room'});
+                };
+
+                //room updating
+                await roomsCollection.updateOne(
+                    { _id: new ObjectId(roomId) },
+                    {
+                        $inc: { likes: 1 },
+                        $push: { likedBy: userEmail }
+                    }
+                );
+
+                res.status(200).json({message: 'Like added successfully'});
+
+            }catch(error){
+                console.log(error.message)
+            };
+        });
+
+        app.get('/room/like/:roomId', async (req, res) => {
+            try {
+                const roomId = req.params.roomId;
+                const room = await roomsCollection.findOne({ _id: new ObjectId(roomId) });
+            
+                if (!room) {
+                    return res.status(404).json({ message: 'Room not found' });
+                }
+            
+                res.status(200).json({ likes: room.likes || "" });
+            
+                } catch (error) {
+                console.log(error.message);
+                res.status(500).json({ message: 'Internal server error' });
+                }
+        });
+
+        
+
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     } finally {
         // await client.close();
@@ -204,3 +256,6 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(` LuxeLodge server running on ${port}`.yellow)
 })
+
+//web.app//AKfycbwLeSnfT8xcUEG2fSc8bhLcx6RJ_RXGJtd8a8I7ciS7p9FGQaSpS6aYhAb_NGj1xVPi
+///url:///https://script.google.com/macros/s/AKfycbwLeSnfT8xcUEG2fSc8bhLcx6RJ_RXGJtd8a8I7ciS7p9FGQaSpS6aYhAb_NGj1xVPi/exec
